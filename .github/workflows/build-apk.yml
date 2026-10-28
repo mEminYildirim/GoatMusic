@@ -15,7 +15,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Extract Uploaded ZIP and Fix 3 Lines in GoatStreamEngine.kt
+      - name: Extract Uploaded ZIP and Fix Line 93
         run: |
           find . -maxdepth 2 -name "*.zip" | while read -r zfile; do
             unzip -o "$zfile"
@@ -26,16 +26,15 @@ jobs:
             done
           fi
           python3 - << 'EOF'
-          p = "app/src/main/java/com/goatmusic/app/engine/GoatStreamEngine.kt"
-          with open(p, "r", encoding="utf-8") as f:
-              c = f.read()
-          c = c.replace('removePrefix(")]}\'\n")', 'trimStart()')
-          c = c.replace('Regex(""Cgt[A-Za-z0-9_\\-]+(?:%3D%3D|==)?"")', r'Regex("Cgt[A-Za-z0-9_\\-]+(?:%3D%3D|==)?")')
-          c = c.replace('val items = root.optJSONArray("items") ?: continue', 'val items = root.optJSONArray("items") ?: return@use')
-          c = c.replace('.replace(Regex("[\\\\/:*?"<>|]"), "_")', r'.replace(Regex("[\\\\/:*?\"<>|]"), "_")')
-          with open(p, "w", encoding="utf-8") as f:
-              f.write(c)
-          print("Fixed GoatStreamEngine.kt successfully!")
+          import os
+          p = "app/src/main/java/com/goatmusic/app/player/GoatNotificationBridge.kt"
+          if os.path.exists(p):
+              with open(p, "r", encoding="utf-8") as f:
+                  c = f.read()
+              c = c.replace("mediaSession = this", "GoatNotificationBridge.mediaSession = this")
+              c = c.replace("GoatNotificationBridge.GoatNotificationBridge.", "GoatNotificationBridge.")
+              with open(p, "w", encoding="utf-8") as f:
+                  f.write(c)
           EOF
 
       - name: Set up JDK 17
@@ -53,18 +52,18 @@ jobs:
         run: gradle assembleDebug --stacktrace
 
       - name: Prepare APK File
-        run: cp app/build/outputs/apk/debug/app-debug.apk GoatMusic-v3.0.apk
+        run: cp app/build/outputs/apk/debug/app-debug.apk GoatMusic-v4.0.apk
 
       - name: Upload APK to Actions Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: GoatMusic-APK
-          path: GoatMusic-v3.0.apk
+          path: GoatMusic-v4.0.apk
 
       - name: Publish APK to GitHub Releases
         uses: softprops/action-gh-release@v2
         continue-on-error: true
         with:
-          tag_name: v3.0.${{ github.run_number }}
-          name: "Goat Music APK v3.0 (#${{ github.run_number }})"
-          files: GoatMusic-v3.0.apk
+          tag_name: v4.0.${{ github.run_number }}
+          name: "Goat Music APK v4.0 (#${{ github.run_number }})"
+          files: GoatMusic-v4.0.apk
